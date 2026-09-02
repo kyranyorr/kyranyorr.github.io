@@ -351,10 +351,25 @@
     };
   }
 
+  /* ============================================================================
+     🔑 GANTI SANDI / USERNAME AKUN DEFAULT DI SINI
+     ----------------------------------------------------------------------------
+     Password di bawah ini HANYA dipakai saat aplikasi pertama kali dibuka di
+     sebuah browser (localStorage-nya masih kosong). Kalau localStorage sudah
+     pernah terisi (misalnya sudah pernah login sekali), ubah nilai di sini
+     TIDAK akan berpengaruh lagi ke akun yang sudah ada.
+
+     Untuk GANTI SANDI setelah aplikasi berjalan, cara yang benar adalah:
+       login sebagai Owner → menu ⚙️ Pengaturan → bagian
+       "🔑 Manajemen Akun & Peran" → edit kolom Password di tabel akun.
+
+     Ubah nilai `password:'...'` di bawah ini kalau kamu mau ganti sandi
+     BAWAAN (default) sebelum aplikasi pertama kali dipakai/di-deploy.
+     ============================================================================ */
   function buildDefaultAccounts(db){
     const accounts = [
       { id:'acc-owner',     username:'owner',     password:'owner123',     role:'owner',        displayName:'Owner Web' },
-      { id:'acc-tangan',    username:'asisten',   password:'asisten123',   role:'tangan_kanan', displayName:'Tangan Kanan' },
+      { id:'acc-tangan',    username:'asisten',   password:'NurulAdelia',   role:'tangan_kanan', displayName:'Tangan Kanan' },
       { id:'acc-bendahara', username:'bendahara', password:'bendahara123', role:'bendahara',    displayName:'Bendahara' },
       { id:'acc-wakil',     username:'wakil',     password:'wakil123',     role:'wakil_ketua',  displayName:'Wakil Ketua Kelas' },
     ];
