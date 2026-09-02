@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manajemen Kyran</title>
+
+<!-- 🌗 Terapkan tema tersimpan sedini mungkin, supaya tidak "kedip" putih dulu sebelum jadi gelap -->
+<script>
+  (function(){
+    try{
+      var saved = localStorage.getItem('classdeck_theme_v1');
+      var theme = (saved === 'light' || saved === 'dark')
+        ? saved
+        : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    }catch(e){}
+  })();
+</script>
+
+<!-- ==================== CDN: Tailwind, FontAwesome, Font ==================== -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ==================== DESIGN TOKENS ==================== */
+  :root{
+    --bg:#F5F6FA;
+    --surface:#FFFFFF;
+    --border:#E2E4EC;
+    --text:#1B1F3B;
+    --text-muted:#6B7280;
+    --mix-base:#FFFFFF; /* dasar warna untuk color-mix cell absensi, ikut tema */
+    --shadow: 0 1px 2px rgba(23,27,51,.06);
+
+    --wd:#6D5EF5;       /* accent kelas Web Developer */
+    --wd-soft:#EEEBFF;
+    --rb:#0E9E8F;       /* accent kelas Robotic */
+    --rb-soft:#E1F6F3;
+
+    --gold:#F0AC2E;
+    --silver:#AEB6C4;
+    --bronze:#C4834F;
+
+    --st-hadir:#0E9E8F;
+    --st-alfa:#E5484D;
+    --st-bolos:#F0AC2E;
+    --st-sakit:#3B82F6;
+    --st-izin:#9AA1B0;
+  }
+
+  /* ==================== 🌙 MODE GELAP ====================
+     Diaktifkan lewat atribut [data-theme="dark"] di <html>,
+     lihat bagian JS "TEMA GELAP/TERANG" untuk logikanya. */
+  [data-theme="dark"]{
+    --bg:#12141F;
+    --surface:#1B1E30;
+    --border:#2E3150;
+    --text:#EDEEF7;
+    --text-muted:#9CA0C4;
+    --mix-base:#1B1E30;
+    --shadow: 0 1px 3px rgba(0,0,0,.4);
+
+    --wd-soft:#26224D;
+    --rb-soft:#123230;
+  }
+
+  *{ font-family:'Inter', sans-serif; }
+  .font-display{ font-family:'Sora', sans-serif; }
+  html{ color-scheme: light; }
+  html[data-theme="dark"]{ color-scheme: dark; }
+  body{ background:var(--bg); color:var(--text); transition: background .2s ease, color .2s ease; }
+
+  /* ==================== SIDEBAR ==================== */
+  #sidebar{
+    background:#171B33;
+    color:#E7E8F5;
+  }
+  #sidebar .class-btn{
+    transition:background .15s ease, color .15s ease;
+  }
+  #sidebar .class-btn.active-webdev{ background:var(--wd); color:#fff; }
+  #sidebar .class-btn.active-robotic{ background:var(--rb); color:#fff; }
+
+  #sidebar .menu-btn{
+    color:#B6B9D6;
+    transition:background .15s ease, color .15s ease;
+    border-left:3px solid transparent;
+  }
+  #sidebar .menu-btn:hover{ background:rgba(255,255,255,.06); color:#fff; }
+  #sidebar .menu-btn.active{
+    background:rgba(255,255,255,.08);
+    color:#fff;
+  }
+  #sidebar .menu-btn.active.theme-webdev{ border-left-color:var(--wd); }
+  #sidebar .menu-btn.active.theme-robotic{ border-left-color:var(--rb); }
+
+  /* ==================== CARD ==================== */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    transition: background .2s ease, border-color .2s ease;
+  }
+
+  /* ==================== 🌗 TOMBOL TOGGLE TEMA ==================== */
+  #themeToggle{
+    width:38px; height:38px;
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.08);
+    color:#E7E8F5;
+    transition:background .15s ease, transform .15s ease;
+    flex-shrink:0;
+  }
+  #themeToggle:hover{ background:rgba(255,255,255,.16); transform:rotate(15deg); }
+  #themeToggle i{ font-size:15px; }
+
+  /* ==================== ATTENDANCE CELL ==================== */
+  .att-cell{
+    width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:8px;
+    border:1.5px dashed var(--border);
+    cursor:pointer;
+    font-weight:700;
+    font-size:13px;
+    user-select:none;
+    transition:transform .1s ease;
+  }
+  .att-cell:hover{ transform:scale(1.06); }
+  .att-cell.st-H{ background:color-mix(in srgb, var(--st-hadir) 18%, var(--mix-base)); border:1.5px solid var(--st-hadir); color:var(--st-hadir); }
+  .att-cell.st-A{ background:color-mix(in srgb, var(--st-alfa) 18%, var(--mix-base)); border:1.5px solid var(--st-alfa); color:var(--st-alfa); }
+  .att-cell.st-B{ background:color-mix(in srgb, var(--st-bolos) 20%, var(--mix-base)); border:1.5px solid var(--st-bolos); color:#c98a1c; }
+  .att-cell.st-S{ background:color-mix(in srgb, var(--st-sakit) 18%, var(--mix-base)); border:1.5px solid var(--st-sakit); color:var(--st-sakit); }
+  .att-cell.st-I{ background:color-mix(in srgb, var(--st-izin) 20%, var(--mix-base)); border:1.5px solid var(--st-izin); color:var(--text-muted); }
+
+  /* ==================== PODIUM ==================== */
+  .podium-bar{
+    border-radius:12px 12px 0 0;
+    display:flex; align-items:flex-end; justify-content:center;
+    color:#fff; font-weight:800; font-family:'Sora',sans-serif;
+  }
+
+  /* scrollbar tipis biar rapi */
+  ::-webkit-scrollbar{ height:8px; width:8px; }
+  ::-webkit-scrollbar-thumb{ background:#D3D6E3; border-radius:8px; }
+
+  .modal-backdrop{ background:rgba(23,27,51,.55); }
+
+  .toast{
+    animation: toastIn .25s ease, toastOut .25s ease 2.2s forwards;
+  }
+  @keyframes toastIn{ from{ opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes toastOut{ to{ opacity:0; transform:translateY(-8px);} }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div class="flex min-h-screen">
+
+  <!-- ====================================================================== -->
+  <!-- SIDEBAR NAVIGASI (pilih kelas + menu)                                  -->
+  <!-- ====================================================================== -->
+  <aside id="sidebar" class="w-64 shrink-0 flex flex-col py-5 px-3 sticky top-0 h-screen overflow-y-auto">
+    <div class="px-3 mb-6 flex items-center gap-2">
+      <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
+        <i class="fa-solid fa-chalkboard-user text-lg"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-display font-bold text-white leading-none">Database Kyran</p>
+        <p class="text-[11px] text-white/40 mt-0.5">✨ Manajemen Kelas Kyran</p>
+      </div>
+      <!-- 🌗 Tombol ubah tema gelap/terang, ikonnya berubah otomatis lewat applyTheme() -->
+      <button id="themeToggle" onclick="toggleTheme()" title="Ubah tema gelap/terang">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    </div>
+
+    <!-- PILIH KELAS -->
+    <p class="text-[11px] uppercase tracking-wide text-white/30 px-3 mb-2">🏷️ Kelas</p>
+    <div class="flex flex-col gap-1 mb-6" id="classSwitcher">
+      <button data-class="webdev" class="class-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-left">
+        <i class="fa-solid fa-code"></i> 💻 Web Developer
+      </button>
+      <button data-class="robotic" class="class-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-left">
+        <i class="fa-solid fa-robot"></i> 🤖 Robotic
+      </button>
+    </div>
+
+    <!-- MENU HALAMAN -->
+    <p class="text-[11px] uppercase tracking-wide text-white/30 px-3 mb-2">📌 Menu</p>
+    <nav class="flex flex-col gap-1" id="menuNav">
+      <button data-page="profil" class="menu-btn flex items-center gap-2 px-3 py-2.5 rounded-r-lg text-sm font-medium text-left">
+        <i class="fa-solid fa-id-card w-4"></i>  Profil &amp; Tugas Siswa
+      </button>
+      <button data-page="absensi" class="menu-btn flex items-center gap-2 px-3 py-2.5 rounded-r-lg text-sm font-medium text-left">
+        <i class="fa-solid fa-table-list w-4"></i> 📋 Absensi
+      </button>
+      <button data-page="penilaian" class="menu-btn flex items-center gap-2 px-3 py-2.5 rounded-r-lg text-sm font-medium text-left">
+        <i class="fa-solid fa-trophy w-4"></i> 🏆 Penilaian &amp; Leaderboard
+      </button>
+      <button data-page="kas" class="menu-btn flex items-center gap-2 px-3 py-2.5 rounded-r-lg text-sm font-medium text-left">
+        <i class="fa-solid fa-wallet w-4"></i> 💰 Uang Kas &amp; Pengeluaran
+      </button>
+      <button data-page="komponen" class="menu-btn flex items-center gap-2 px-3 py-2.5 rounded-r-lg text-sm font-medium text-left">
+        <i class="fa-solid fa-boxes-stacked w-4"></i> 📦 Komponen (Barang/Alat)
+      </button>
+    </nav>
+
+    <div class="mt-auto pt-4 border-t border-white/10">
+      <div id="sessionInfo" class="px-3 py-2 mb-1 text-[11px] text-white/40"></div>
+      <button data-page="pengaturan" class="menu-btn flex items-center gap-2 px-3 py-2.5 rounded-r-lg text-sm font-medium text-left w-full">
+        <i class="fa-solid fa-gear w-4"></i> ⚙️ Pengaturan (Export/Import/Akun)
+      </button>
+      <button onclick="logout()" class="menu-btn flex items-center gap-2 px-3 py-2.5 rounded-r-lg text-sm font-medium text-left w-full">
+        <i class="fa-solid fa-right-from-bracket w-4"></i> 🚪 Keluar
+      </button>
+    </div>
+  </aside>
+
+  <!-- ====================================================================== -->
+  <!-- KONTEN UTAMA                                                           -->
+  <!-- ====================================================================== -->
+  <main class="flex-1 p-6 md:p-8 max-w-6xl">
+    <div id="pageContent"><!-- diisi oleh JS render...() --></div>
+  </main>
+</div>
+
+<!-- ====================================================================== -->
+<!-- TAMPILAN KHUSUS AKUN CUSTOMER (siswa) — hanya tempat kumpul tugas      -->
+<!-- ====================================================================== -->
+<div id="customerView" class="hidden min-h-screen flex-col">
+  <header class="flex items-center justify-between px-6 py-4" style="background:#171B33; color:#E7E8F5">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
+        <i class="fa-solid fa-chalkboard-user text-lg"></i>
+      </div>
+      <div>
+        <p class="font-display font-bold leading-none">ClassDeck</p>
+        <p id="customerHeaderName" class="text-[11px] text-white/40 mt-0.5"></p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="themeToggleCustomer" onclick="toggleTheme()" title="Ubah tema gelap/terang"
+              class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:rgba(255,255,255,.08)">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+      <button onclick="logout()" class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:rgba(255,255,255,.08)" title="Keluar">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </header>
+  <main class="flex-1 p-6 md:p-8 max-w-2xl mx-auto w-full">
+    <div id="customerContent"><!-- diisi oleh renderCustomerPage() --></div>
+  </main>
+</div>
+
+<!-- ====================================================================== -->
+<!-- MODAL: Detail Profil Siswa                                             -->
+<!-- ====================================================================== -->
+<div id="studentModal" class="fixed inset-0 hidden items-center justify-center modal-backdrop z-50 p-4">
+  <div class="card w-full max-w-lg max-h-[85vh] overflow-y-auto p-6" id="studentModalBody"></div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- MODAL: Tambah / Edit Siswa                                             -->
+<!-- ====================================================================== -->
+<div id="formModal" class="fixed inset-0 hidden items-center justify-center modal-backdrop z-50 p-4">
+  <div class="card w-full max-w-md p-6" id="formModalBody"></div>
+</div>
+
+<!-- Container notifikasi kecil (toast) -->
+<div id="toastBox" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2"></div>
+
+<!-- input file tersembunyi untuk fitur Import JSON -->
+<input type="file" id="importFileInput" accept="application/json" class="hidden">
+
+<script>
+/* ============================================================================
+   CLASSDECK — SCRIPT UTAMA
+   Cari section pakai komentar besar di bawah ini:
+   1. KONSTANTA & KONFIGURASI
+   2. DATA MODEL (localStorage, dummy data)
+   3. STATE APLIKASI
+   4. UTIL (save, toast, format)
+   5. RENDER: SIDEBAR
+   6. RENDER: HALAMAN PROFIL & TUGAS
+   7. RENDER: HALAMAN ABSENSI
+   8. RENDER: HALAMAN PENILAIAN & PODIUM
+   9. RENDER: HALAMAN PENGATURAN (EXPORT/IMPORT)
+   10. MODAL: DETAIL SISWA
+   11. MODAL: FORM TAMBAH/EDIT SISWA
+   12. INIT
+   ============================================================================ */
+
+/* ==================== 1. KONSTANTA & KONFIGURASI ==================== */
+const STORAGE_KEY   = 'classdeck_data_v1';
+const MONTH_KEY      = 'classdeck_selected_month_v1';
+const THEME_KEY       = 'classdeck_theme_v1'; // 'light' | 'dark'
+const TOTAL_MEETING  = 12; // jumlah kolom pertemuan di absensi
+
+// 🔐 akun & sesi login
+const ACCOUNTS_KEY = 'classdeck_accounts_v1';
+const SESSION_KEY   = 'classdeck_session_v1';
+
+// kondisi barang/alat untuk halaman Komponen milik bendahara
+const KONDISI_OPTIONS = ['Baik', 'Rusak Ringan', 'Rusak Berat', 'Hilang'];
+
+// 👤 hak akses tiap peran: halaman apa saja yang boleh dilihat & diedit
+const ROLE_META = {
+  owner:        { label: 'Owner Web',            pages: ['profil','absensi','penilaian','kas','komponen','pengaturan'] },
+  tangan_kanan: { label: 'Tangan Kanan',          pages: ['profil','absensi'] },
+  bendahara:    { label: 'Bendahara',             pages: ['kas','komponen'] },
+  wakil_ketua:  { label: 'Wakil Ketua Kelas',     pages: ['absensi'] },
+  customer:     { label: 'Siswa (Customer)',      pages: ['tugas-saya'] },
+};
+
+// 🗓️ daftar 12 bulan dalam 1 tahun untuk halaman absensi
+const MONTH_NAMES = [
+  'Januari','Februari','Maret','April','Mei','Juni',
+  'Juli','Agustus','September','Oktober','November','Desember'
+];
+
+// Urutan siklus saat cell absensi diklik: kosong -> Hadir -> Alfa -> Bolos -> Sakit -> Izin -> kosong
+const STATUS_CYCLE = ['', 'H', 'A', 'B', 'S', 'I'];
+
+const STATUS_CONFIG = {
+  H: { label: '✅ Hadir', symbol: '<i class="fa-solid fa-check"></i>' },
+  A: { label: '❌ Alfa',  symbol: '<i class="fa-solid fa-xmark"></i>' },
+  B: { label: '🚪 Bolos', symbol: 'B' },
+  S: { label: '🤒 Sakit', symbol: 'S' },
+  I: { label: '📝 Izin',  symbol: 'I' },
+};
+
+// kriteria nilai (sama untuk kedua kelas)
+const GRADE_CRITERIA = [
+  { key: 'menulis',   label: 'Menulis Penjelasan' },
+  { key: 'keaktifan', label: 'Keaktifan Bertanya' },
+  { key: 'tugas',     label: 'Mengerjakan Tugas' },
+  { key: 'proyek',    label: 'Proyek (Ujian Akhir)' },
+];
+
+const CLASS_META = {
+  webdev:  { label: 'Web Developer', color: 'var(--wd)', soft: 'var(--wd-soft)', icon: 'fa-code' },
+  robotic: { label: 'Robotic',        color: 'var(--rb)', soft: 'var(--rb-soft)', icon: 'fa-robot' },
+};
+
+/* ==================== 2. DATA MODEL & DUMMY DATA ==================== */
+// Struktur data per kelas:
+// { students: [ {id,name,bio,tasks:[...]} ], attendance: { [studentId]: {1:'H',2:'A',...} }, grades: { [studentId]: {menulis,keaktifan,tugas,proyek} } }
+function buildDefaultData(){
+  return {
+    webdev: {
+      students: [
+        { id:'s-wd-1',  name:'Ahmad Fauzan',       kelas:'Web Developer', bio:'Suka desain UI dan sedang belajar JavaScript dasar. 🎨',
+          tasks: [ { id:'t1', title:'Landing Page Sederhana', link:'https://github.com/contoh/landing-page', date:'2026-08-10' } ] },
+        { id:'s-wd-2',  name:'Siti Nur Aisyah',     kelas:'Web Developer', bio:'Tertarik dengan animasi CSS dan responsive design. 💅', tasks: [] },
+        { id:'s-wd-3',  name:'Rizky Pratama',       kelas:'Web Developer', bio:'Sedang belajar HTML & CSS dari nol. 🌱', tasks: [] },
+        { id:'s-wd-4',  name:'Nadia Putri',         kelas:'Web Developer', bio:'Suka bikin tampilan web yang colorful. 🌈', tasks: [] },
+        { id:'s-wd-5',  name:'Fajar Ramadhan',      kelas:'Web Developer', bio:'Tertarik jadi backend developer. 🛠️', tasks: [] },
+        { id:'s-wd-6',  name:'Intan Permata',       kelas:'Web Developer', bio:'Rajin mengerjakan tugas tepat waktu. 📝', tasks: [] },
+        { id:'s-wd-7',  name:'Yusuf Hidayat',       kelas:'Web Developer', bio:'Suka eksplor framework JavaScript baru. ⚡', tasks: [] },
+        { id:'s-wd-8',  name:'Salsabila Azzahra',   kelas:'Web Developer', bio:'Hobi desain UI/UX di Figma. 🎯', tasks: [] },
+        { id:'s-wd-9',  name:'Bagas Wicaksono',     kelas:'Web Developer', bio:'Sedang belajar membuat website portofolio. 💼', tasks: [] },
+        { id:'s-wd-10', name:'Melati Anggraini',    kelas:'Web Developer', bio:'Suka menulis dokumentasi proyek dengan rapi. 📚', tasks: [] },
+        { id:'s-wd-11', name:'Dimas Aditya',        kelas:'Web Developer', bio:'Aktif bertanya saat kelas berlangsung. 🙋', tasks: [] }
+      ],
+      attendance: {
+        's-wd-1': { 8: { 1:'H', 2:'H', 3:'S' } },
+        's-wd-2': { 8: { 1:'H', 2:'I' } }
+      },
+      grades: {
+        's-wd-1': { menulis:85, keaktifan:80, tugas:90, proyek:88 },
+        's-wd-2': { menulis:75, keaktifan:70, tugas:80, proyek:0 }
+      },
+      kas: {
+        transactions: [
+          { id:'kt1', tanggal:'2026-08-05', keterangan:'Iuran kas mingguan', tipe:'masuk', jumlah:110000 },
+          { id:'kt2', tanggal:'2026-08-14', keterangan:'Beli spidol & penghapus', tipe:'keluar', jumlah:35000 }
+        ]
+      },
+      komponen: [
+        { id:'kp1', nama:'Proyektor Kelas', jumlah:1, kondisi:'Baik', catatan:'Dipakai bersama Robotic' },
+        { id:'kp2', nama:'Kabel HDMI', jumlah:2, kondisi:'Rusak Ringan', catatan:'Salah satu konektornya longgar' }
+      ]
+    },
+    robotic: {
+      students: [
+        { id:'s-rb-1', name:'Budi Santoso',   kelas:'Robotic', bio:'Anggota tim robotik, suka merakit rangkaian sensor. 🔧',
+          tasks: [ { id:'t1', title:'Robot Line Follower', photoLink:'https://drive.google.com/contoh-foto1', projectLink:'https://github.com/contoh/line-follower', date:'2026-08-12' } ] },
+        { id:'s-rb-2', name:'Dewi Lestari',   kelas:'Robotic', bio:'Baru bergabung, sedang belajar dasar Arduino. 🔌', tasks: [] },
+        { id:'s-rb-3', name:'Reza Firmansyah',kelas:'Robotic', bio:'Suka bongkar pasang komponen elektronik. ⚙️', tasks: [] },
+        { id:'s-rb-4', name:'Putri Wulandari',kelas:'Robotic', bio:'Tertarik dengan pemrograman mikrokontroler. 🤓', tasks: [] },
+        { id:'s-rb-5', name:'Andika Saputra', kelas:'Robotic', bio:'Suka mengikuti kompetisi robotik. 🏁', tasks: [] },
+        { id:'s-rb-6', name:'Nabila Zahra',   kelas:'Robotic', bio:'Rajin mencatat hasil eksperimen sensor. 🧪', tasks: [] }
+      ],
+      attendance: {
+        's-rb-1': { 8: { 1:'H', 2:'H', 3:'H', 4:'B' } },
+        's-rb-2': { 8: { 1:'S', 2:'H' } }
+      },
+      grades: {
+        's-rb-1': { menulis:88, keaktifan:92, tugas:85, proyek:90 },
+        's-rb-2': { menulis:60, keaktifan:65, tugas:70, proyek:0 }
+      },
+      kas: {
+        transactions: [
+          { id:'kt1', tanggal:'2026-08-06', keterangan:'Iuran kas mingguan', tipe:'masuk', jumlah:90000 },
+          { id:'kt2', tanggal:'2026-08-19', keterangan:'Beli baterai 9V', tipe:'keluar', jumlah:48000 }
+        ]
+      },
+      komponen: [
+        { id:'kp1', nama:'Arduino Uno', jumlah:4, kondisi:'Baik', catatan:'Simpan di kotak komponen A' },
+        { id:'kp2', nama:'Sensor Ultrasonik HC-SR04', jumlah:6, kondisi:'Baik', catatan:'' },
+        { id:'kp3', nama:'Motor DC + Roda', jumlah:3, kondisi:'Rusak Berat', catatan:'2 unit kabelnya putus' }
+      ]
+    }
+  };
+}
+
+/* helper: pastikan data lama (tanpa kas/komponen) tetap punya struktur baru */
+function ensureDataShape(db){
+  ['webdev','robotic'].forEach(cls=>{
+    if(!db[cls]) return;
+    if(!db[cls].kas) db[cls].kas = { transactions: [] };
+    if(!db[cls].kas.transactions) db[cls].kas.transactions = [];
+    if(!db[cls].komponen) db[cls].komponen = [];
+  });
+  return db;
+}
+
+/* ==================== 2b. AKUN & PERAN (login) ==================== */
+function slugifyUsername(name){
+  return (name||'')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9\s]/g,'')
+    .trim()
+    .split(/\s+/)
+    .join('.');
+}
+
+// akun bawaan non-customer, ditambah 1 akun customer otomatis per siswa yang ada
+function buildDefaultAccounts(db){
+  const accounts = [
+    { id:'acc-owner',      username:'owner',     password:'owner123',      role:'owner',        displayName:'Owner Web' },
+    { id:'acc-tangan',     username:'asisten',   password:'asisten123',    role:'tangan_kanan', displayName:'Tangan Kanan' },
+    { id:'acc-bendahara',  username:'bendahara', password:'bendahara123',  role:'bendahara',    displayName:'Bendahara' },
+    { id:'acc-wakil',      username:'wakil',     password:'wakil123',      role:'wakil_ketua',  displayName:'Wakil Ketua Kelas' },
+  ];
+  const used = new Set(accounts.map(a=>a.username));
+  ['webdev','robotic'].forEach(cls=>{
+    (db[cls].students||[]).forEach(s=>{
+      let base = slugifyUsername(s.name) || 'siswa';
+      let username = base, n = 2;
+      while(used.has(username)){ username = `${base}${n}`; n++; }
+      used.add(username);
+      accounts.push({
+        id: uid('acc'),
+        username,
+        password: 'siswa123',
+        role: 'customer',
+        studentId: s.id,
+        studentClass: cls,
+        displayName: s.name
+      });
+    });
+  });
+  return accounts;
+}
+
+function loadAccounts(){
+  const raw = localStorage.getItem(ACCOUNTS_KEY);
+  if(raw){
+    try{ return JSON.parse(raw); }catch(e){ /* jatuh ke bawah, buat ulang */ }
+  }
+  const fresh = buildDefaultAccounts(loadData());
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(fresh));
+  return fresh;
+}
+function saveAccounts(){ localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(ACCOUNTS)); }
+
+function loadSession(){
+  try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){ return null; }
+}
+function logout(){
+  localStorage.removeItem(SESSION_KEY);
+  window.location.href = 'login.html';
+}
+
+function loadData(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw){
+    const fresh = buildDefaultData();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+    return fresh;
+  }
+  try{
+    return ensureDataShape(JSON.parse(raw));
+  }catch(e){
+    console.error('Data localStorage rusak, memuat data default.', e);
+    const fresh = buildDefaultData();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+    return fresh;
+  }
+}
+
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+}
+
+/* 📅 bulan absensi yang terakhir dipilih -> otomatis diingat saat file dibuka lagi */
+function loadSelectedMonth(){
+  const raw = localStorage.getItem(MONTH_KEY);
+  const n = Number(raw);
+  if(n >= 1 && n <= 12) return n;
+  return new Date().getMonth() + 1; // default: bulan berjalan
+}
+function saveSelectedMonth(){
+  localStorage.setItem(MONTH_KEY, String(currentMonth));
+}
+
+/* 🌗 TEMA GELAP/TERANG — diingat otomatis lewat localStorage.
+   Kalau belum pernah diatur, ikuti preferensi sistem/browser pengguna. */
+function loadTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  if(saved === 'light' || saved === 'dark') return saved;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  const btn = document.getElementById('themeToggle');
+  if(btn){
+    btn.innerHTML = currentTheme === 'dark'
+      ? '<i class="fa-solid fa-sun"></i>'
+      : '<i class="fa-solid fa-moon"></i>';
+    btn.title = currentTheme === 'dark' ? 'Pindah ke mode terang' : 'Pindah ke mode gelap';
+  }
+}
+
+function toggleTheme(){
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, currentTheme);
+  applyTheme();
+  const custIcon = document.querySelector('#themeToggleCustomer i');
+  if(custIcon) custIcon.className = currentTheme==='dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  showToast(currentTheme === 'dark' ? '🌙 Mode gelap aktif' : '☀️ Mode terang aktif');
+}
+
+/* ==================== 3. STATE APLIKASI ==================== */
+let DB = loadData();                 // seluruh data aplikasi (2 kelas)
+let ACCOUNTS = loadAccounts();        // seluruh akun & peran
+let SESSION  = loadSession();         // akun yang sedang login, atau null
+let currentClass = (SESSION && SESSION.studentClass) || 'webdev';   // 'webdev' | 'robotic'
+let currentPage  = 'profil';         // 'profil' | 'absensi' | 'penilaian' | 'kas' | 'komponen' | 'pengaturan'
+let currentMonth = loadSelectedMonth(); // 1-12, diingat otomatis lewat localStorage
+let currentTheme = loadTheme();      // 'light' | 'dark', diingat otomatis lewat localStorage
+
+// 🔐 wajib login: kalau belum ada sesi, lempar ke halaman login dan hentikan render
+if(!SESSION){
+  window.location.href = 'login.html';
+}
+const ALLOWED_PAGES = SESSION ? (ROLE_META[SESSION.role] ? ROLE_META[SESSION.role].pages : []) : [];
+if(SESSION && SESSION.role !== 'customer' && !ALLOWED_PAGES.includes(currentPage)){
+  currentPage = ALLOWED_PAGES[0] || 'profil';
+}
+
+/* ==================== 4. UTIL ==================== */
+function showToast(message, type='success'){
+  const box = document.getElementById('toastBox');
+  const colors = { success:'#0E9E8F', error:'#E5484D', info:'#3B82F6' };
+  const el = document.createElement('div');
+  el.className = 'toast card px-4 py-2.5 text-sm font-medium shadow-lg';
+  el.style.borderLeft = `4px solid ${colors[type]||colors.success}`;
+  el.textContent = message;
+  box.appendChild(el);
+  setTimeout(()=> el.remove(), 2500);
+}
+
+function classData(){ return DB[currentClass]; }
+function meta(){ return CLASS_META[currentClass]; }
+
+function calcTotal(g){
+  if(!g) return 0;
+  const { menulis=0, keaktifan=0, tugas=0, proyek=0 } = g;
+  return Math.round((Number(menulis)+Number(keaktifan)+Number(tugas)+Number(proyek))/4);
+}
+
+function escapeHtml(str){
+  return (str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function uid(prefix){ return prefix + '-' + Math.random().toString(36).slice(2,9); }
+
+/* ==================== 5. RENDER: SIDEBAR ==================== */
+function applyRoleUI(){
+  if(!SESSION) return;
+  // sembunyikan menu yang tidak diizinkan untuk peran ini
+  document.querySelectorAll('.menu-btn[data-page]').forEach(btn=>{
+    btn.classList.toggle('hidden', !ALLOWED_PAGES.includes(btn.dataset.page));
+  });
+  const info = document.getElementById('sessionInfo');
+  if(info){
+    const roleLabel = (ROLE_META[SESSION.role]||{}).label || SESSION.role;
+    info.innerHTML = `<i class="fa-solid fa-user mr-1"></i>${escapeHtml(SESSION.displayName||SESSION.username)}<br><span class="opacity-70">${roleLabel}</span>`;
+  }
+}
+
+function renderSidebar(){
+  // tombol kelas aktif
+  document.querySelectorAll('.class-btn').forEach(btn=>{
+    const c = btn.dataset.class;
+    btn.classList.remove('active-webdev','active-robotic');
+    if(c === currentClass) btn.classList.add(`active-${c}`);
+  });
+
+  // tombol menu aktif (termasuk tombol pengaturan di bawah)
+  document.querySelectorAll('.menu-btn').forEach(btn=>{
+    btn.classList.remove('active','theme-webdev','theme-robotic');
+    if(btn.dataset.page === currentPage){
+      btn.classList.add('active', `theme-${currentClass}`);
+    }
+  });
+}
+
+/* ==================== 6. RENDER: HALAMAN PROFIL & TUGAS SISWA ==================== */
+function renderProfilPage(){
+  const data = classData();
+  const m = meta();
+
+  const cards = data.students.map(s => `
+    <button class="card text-left p-4 hover:shadow-md transition w-full flex items-start gap-3" onclick="openStudentModal('${s.id}')">
+      <div class="w-11 h-11 rounded-full flex items-center justify-center font-display font-bold text-white shrink-0"
+           style="background:${m.color}">
+        ${escapeHtml(s.name).charAt(0).toUpperCase()}
+      </div>
+      <div class="min-w-0">
+        <p class="font-semibold truncate">${escapeHtml(s.name)}</p>
+        <p class="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-2">${escapeHtml(s.bio)||'😴 Belum ada bio.'}</p>
+        <p class="text-[11px] mt-1.5 inline-flex items-center gap-1" style="color:${m.color}">
+          <i class="fa-solid fa-folder-open"></i> 📁 ${s.tasks.length} tugas terkumpul
+        </p>
+      </div>
+    </button>
+  `).join('') || `<p class="text-sm text-[var(--text-muted)] col-span-full">😴 Belum ada siswa di kelas ini.</p>`;
+
+  document.getElementById('pageContent').innerHTML = `
+    ${pageHeader('🪪 Profil & Tugas Siswa', `Daftar ${data.students.length} siswa kelas ${m.label} beserta riwayat pengumpulan tugas.`)}
+    <div class="flex justify-end mb-4">
+      <button onclick="openStudentForm()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white flex items-center gap-2"
+              style="background:${m.color}">
+        <i class="fa-solid fa-user-plus"></i> ➕ Tambah Siswa
+      </button>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">${cards}</div>
+  `;
+}
+
+/* ==================== 6b. RENDER: TAMPILAN CUSTOMER (siswa login sendiri) ==================== */
+function findMyStudent(){
+  if(!SESSION || SESSION.role !== 'customer') return null;
+  const cls = SESSION.studentClass;
+  const s = DB[cls] && DB[cls].students.find(x=>x.id===SESSION.studentId);
+  return s ? { student: s, cls } : null;
+}
+
+function renderCustomerPage(){
+  const found = findMyStudent();
+  document.getElementById('customerHeaderName').textContent = SESSION.displayName || SESSION.username;
+  const applyIcon = () => {
+    const icon = document.querySelector('#themeToggleCustomer i');
+    if(icon) icon.className = currentTheme==='dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  };
+  applyIcon();
+
+  if(!found){
+    document.getElementById('customerContent').innerHTML = `
+      <div class="card p-6 text-sm text-[var(--text-muted)]">
+        ⚠️ Data siswa untuk akun ini tidak ditemukan. Hubungi owner web.
+      </div>`;
+    return;
+  }
+  const { student: s, cls } = found;
+  const m = CLASS_META[cls];
+
+  const taskListHtml = s.tasks.length ? s.tasks.map(t=>{
+    if(cls === 'robotic'){
+      return `
+        <div class="border rounded-lg p-3 mb-2 text-sm" style="border-color:var(--border)">
+          <div class="flex items-start justify-between gap-2">
+            <p class="font-medium mb-1">${escapeHtml(t.title)}</p>
+            <button onclick="deleteMyTask('${t.id}')" class="text-red-500 text-xs shrink-0"><i class="fa-solid fa-trash"></i></button>
+          </div>
+          <p class="text-xs text-[var(--text-muted)] mb-1">${t.date||''}</p>
+          <a href="${escapeHtml(t.photoLink)}" target="_blank" class="text-xs block truncate hover:underline" style="color:${m.color}"><i class="fa-solid fa-image mr-1"></i>${escapeHtml(t.photoLink)||'(belum diisi)'}</a>
+          <a href="${escapeHtml(t.projectLink)}" target="_blank" class="text-xs block truncate hover:underline" style="color:${m.color}"><i class="fa-solid fa-code-branch mr-1"></i>${escapeHtml(t.projectLink)||'(belum diisi)'}</a>
+        </div>`;
+    }
+    return `
+      <div class="border rounded-lg p-3 mb-2 text-sm" style="border-color:var(--border)">
+        <div class="flex items-start justify-between gap-2">
+          <p class="font-medium mb-1">${escapeHtml(t.title)}</p>
+          <button onclick="deleteMyTask('${t.id}')" class="text-red-500 text-xs shrink-0"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <p class="text-xs text-[var(--text-muted)] mb-1">${t.date||''}</p>
+        <a href="${escapeHtml(t.link)}" target="_blank" class="text-xs block truncate hover:underline" style="color:${m.color}"><i class="fa-solid fa-link mr-1"></i>${escapeHtml(t.link)||'(belum diisi)'}</a>
+      </div>`;
+  }).join('') : `<p class="text-xs text-[var(--text-muted)]">📭 Kamu belum mengumpulkan tugas.</p>`;
+
+  const taskFormHtml = cls === 'robotic' ? `
+    <input id="myTaskTitle" placeholder="Judul tugas/proyek" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+    <input id="myTaskPhoto" placeholder="Link Foto/Dokumentasi" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+    <input id="myTaskProject" placeholder="Link File Project (Drive/Github/Docs)" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+  ` : `
+    <input id="myTaskTitle" placeholder="Judul tugas/proyek" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+    <input id="myTaskLink" placeholder="Link Project" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+  `;
+
+  document.getElementById('customerContent').innerHTML = `
+    <div class="mb-6">
+      <p class="text-xs font-semibold uppercase tracking-wide" style="color:${m.color}"><i class="fa-solid ${m.icon} mr-1"></i>${m.label}</p>
+      <h1 class="font-display text-2xl font-bold mt-1">📁 Tempat Pengumpulan Tugas</h1>
+      <p class="text-sm text-[var(--text-muted)] mt-1">Halo, ${escapeHtml(s.name)}! Kamu hanya bisa melihat dan mengedit tugas milikmu sendiri.</p>
+    </div>
+
+    <div class="card p-4 mb-4">
+      <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">📂 Tugas yang Sudah Dikumpulkan</p>
+      ${taskListHtml}
+    </div>
+
+    <div class="card p-4">
+      <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">➕ Kumpulkan Tugas Baru</p>
+      ${taskFormHtml}
+      <button onclick="submitMyTask()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white w-full" style="background:${m.color}">
+        <i class="fa-solid fa-paper-plane mr-1"></i> Kumpulkan
+      </button>
+    </div>
+  `;
+}
+
+function submitMyTask(){
+  const found = findMyStudent();
+  if(!found) return;
+  const { student: s, cls } = found;
+  const title = document.getElementById('myTaskTitle').value.trim();
+  if(!title){ showToast('⚠️ Judul tugas wajib diisi.', 'error'); return; }
+  const task = { id: uid('t'), title, date: new Date().toISOString().slice(0,10) };
+  if(cls === 'robotic'){
+    task.photoLink = document.getElementById('myTaskPhoto').value.trim();
+    task.projectLink = document.getElementById('myTaskProject').value.trim();
+  } else {
+    task.link = document.getElementById('myTaskLink').value.trim();
+  }
+  s.tasks.unshift(task);
+  saveData();
+  showToast('✅ Tugas berhasil dikumpulkan.');
+  renderCustomerPage();
+}
+
+function deleteMyTask(taskId){
+  const found = findMyStudent();
+  if(!found) return;
+  if(!confirm('Hapus tugas ini?')) return;
+  found.student.tasks = found.student.tasks.filter(t=>t.id!==taskId);
+  saveData();
+  showToast('🗑️ Tugas dihapus.');
+  renderCustomerPage();
+}
+
+function pageHeader(title, subtitle){
+  const m = meta();
+  return `
+    <div class="mb-6">
+      <p class="text-xs font-semibold uppercase tracking-wide" style="color:${m.color}">
+        <i class="fa-solid ${m.icon} mr-1"></i>${m.label}
+      </p>
+      <h1 class="font-display text-2xl font-bold mt-1">${title}</h1>
+      <p class="text-sm text-[var(--text-muted)] mt-1">${subtitle}</p>
+    </div>
+  `;
+}
+
+/* ==================== 7. RENDER: HALAMAN ABSENSI ==================== */
+function renderAbsensiPage(){
+  const data = classData();
+  const m = meta();
+
+  const meetingHeaders = Array.from({length: TOTAL_MEETING}, (_,i)=>
+    `<th class="px-1 py-2 text-center text-[11px] font-semibold text-[var(--text-muted)] whitespace-nowrap">P-${i+1}</th>`
+  ).join('');
+
+  const rows = data.students.map(s => {
+    const cells = Array.from({length: TOTAL_MEETING}, (_,i)=>{
+      const meetingNo = i+1;
+      const monthData = (data.attendance[s.id] && data.attendance[s.id][currentMonth]) || {};
+      const status = monthData[meetingNo] || '';
+      const cls = status ? `st-${status}` : '';
+      const symbol = status ? STATUS_CONFIG[status].symbol : '';
+      return `<td class="px-1 py-2 text-center">
+        <div class="att-cell ${cls}" onclick="cycleAttendance('${s.id}', ${meetingNo})" title="Klik untuk ubah status">${symbol}</div>
+      </td>`;
+    }).join('');
+    return `
+      <tr class="border-t" style="border-color:var(--border)">
+        <td class="px-3 py-2 sticky left-0 font-medium whitespace-nowrap" style="background:var(--surface)">${escapeHtml(s.name)}</td>
+        ${cells}
+      </tr>
+    `;
+  }).join('') || `<tr><td class="px-3 py-4 text-sm text-[var(--text-muted)]">😴 Belum ada siswa.</td></tr>`;
+
+  const monthOptions = MONTH_NAMES.map((name, i) =>
+    `<option value="${i+1}" ${currentMonth === i+1 ? 'selected' : ''}>${name}</option>`
+  ).join('');
+
+  document.getElementById('pageContent').innerHTML = `
+    ${pageHeader('📋 Absensi', `Klik kotak pertemuan untuk mengganti status kehadiran siswa kelas ${m.label}.`)}
+
+    <div class="card p-3 mb-4 flex items-center gap-3 flex-wrap">
+      <label for="monthSelect" class="text-sm font-semibold flex items-center gap-1.5">
+        📅 Pilih Bulan:
+      </label>
+      <select id="monthSelect" onchange="changeMonth(this.value)"
+              class="border rounded-lg px-3 py-1.5 text-sm font-medium" style="border-color:var(--border)">
+        ${monthOptions}
+      </select>
+      <span class="text-[11px] text-[var(--text-muted)] flex items-center gap-1">
+        <i class="fa-solid fa-circle-check" style="color:var(--st-hadir)"></i> Bulan yang dipilih otomatis diingat saat kamu buka lagi file ini 💾
+      </span>
+    </div>
+
+    <div class="flex flex-wrap gap-3 mb-4 text-xs">
+      ${Object.entries(STATUS_CONFIG).map(([code,cfg])=>`
+        <span class="att-cell st-${code}" style="width:26px;height:26px;font-size:11px;cursor:default">${cfg.symbol}</span>
+        <span class="-ml-2 mr-2 self-center text-[var(--text-muted)]">${cfg.label}</span>
+      `).join('')}
+    </div>
+
+    <div class="card overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b" style="border-color:var(--border)">
+            <th class="px-3 py-2 text-left sticky left-0 text-[11px] font-semibold text-[var(--text-muted)]" style="background:var(--surface)">👤 Nama Siswa</th>
+            ${meetingHeaders}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function changeMonth(month){
+  currentMonth = Number(month);
+  saveSelectedMonth();
+  renderAbsensiPage();
+  showToast(`📅 Bulan absensi diganti ke ${MONTH_NAMES[currentMonth-1]}.`);
+}
+
+function cycleAttendance(studentId, meetingNo){
+  const data = classData();
+  if(!data.attendance[studentId]) data.attendance[studentId] = {};
+  if(!data.attendance[studentId][currentMonth]) data.attendance[studentId][currentMonth] = {};
+  const monthData = data.attendance[studentId][currentMonth];
+  const current = monthData[meetingNo] || '';
+  const idx = STATUS_CYCLE.indexOf(current);
+  const next = STATUS_CYCLE[(idx+1) % STATUS_CYCLE.length];
+  if(next === ''){
+    delete monthData[meetingNo];
+  } else {
+    monthData[meetingNo] = next;
+  }
+  saveData();
+  renderAbsensiPage();
+}
+
+/* ==================== 8. RENDER: HALAMAN PENILAIAN & PODIUM ==================== */
+function renderPenilaianPage(){
+  const data = classData();
+  const m = meta();
+
+  // hitung total & urutkan untuk podium
+  const ranked = data.students
+    .map(s => ({ ...s, total: calcTotal(data.grades[s.id]) }))
+    .sort((a,b)=> b.total - a.total);
+
+  const top3 = ranked.slice(0,3);
+  const [p1,p2,p3] = [top3[0], top3[1], top3[2]];
+
+  function podiumBlock(student, place){
+    if(!student) return `<div class="flex-1"></div>`;
+    const heights  = { 1:'140px', 2:'105px', 3:'80px' };
+    const colors   = { 1:'var(--gold)', 2:'var(--silver)', 3:'var(--bronze)' };
+    const medals   = { 1:'🥇', 2:'🥈', 3:'🥉' };
+    const order    = { 1:2, 2:1, 3:3 }; // urutan visual: 2-1-3
+    return `
+      <div class="flex-1 flex flex-col items-center" style="order:${order[place]}">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center font-display font-bold text-white mb-2"
+             style="background:${colors[place]}">${escapeHtml(student.name).charAt(0).toUpperCase()}</div>
+        <p class="text-xs font-semibold text-center mb-1 truncate w-full">${escapeHtml(student.name)}</p>
+        <p class="text-[11px] text-[var(--text-muted)] mb-2">🌟 ${student.total} poin</p>
+        <div class="podium-bar w-full" style="height:${heights[place]}; background:${colors[place]}">
+          <span class="mb-2 text-lg">${medals[place]}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  const gradeRows = data.students.map(s=>{
+    const g = data.grades[s.id] || {};
+    const total = calcTotal(g);
+    const inputs = GRADE_CRITERIA.map(c => `
+      <td class="px-2 py-2 text-center">
+        <input type="number" min="0" max="100" value="${g[c.key] ?? 0}"
+               class="w-16 text-center rounded-md border px-1 py-1 text-sm"
+               style="border-color:var(--border)"
+               onchange="updateGrade('${s.id}','${c.key}', this.value)">
+      </td>`).join('');
+    return `
+      <tr class="border-t" style="border-color:var(--border)">
+        <td class="px-3 py-2 font-medium whitespace-nowrap">${escapeHtml(s.name)}</td>
+        ${inputs}
+        <td class="px-3 py-2 text-center font-display font-bold" style="color:${m.color}">${total}</td>
+      </tr>
+    `;
+  }).join('') || `<tr><td class="px-3 py-4 text-sm text-[var(--text-muted)]">Belum ada siswa.</td></tr>`;
+
+  document.getElementById('pageContent').innerHTML = `
+    ${pageHeader('🏆 Penilaian & Leaderboard', `Podium otomatis berdasarkan total nilai 4 kriteria, kelas ${m.label}.`)}
+
+    <div class="card p-6 mb-6">
+      <div class="flex items-end justify-center gap-4 max-w-md mx-auto">
+        ${podiumBlock(p1,1)}
+        ${podiumBlock(p2,2)}
+        ${podiumBlock(p3,3)}
+      </div>
+      ${ranked.length===0 ? `<p class="text-center text-sm text-[var(--text-muted)] mt-4">Belum ada data nilai untuk ditampilkan.</p>` : ''}
+    </div>
+
+    <div class="card overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b" style="border-color:var(--border)">
+            <th class="px-3 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Nama Siswa</th>
+            ${GRADE_CRITERIA.map(c=>`<th class="px-2 py-2 text-center text-[11px] font-semibold text-[var(--text-muted)]">${c.label}</th>`).join('')}
+            <th class="px-3 py-2 text-center text-[11px] font-semibold text-[var(--text-muted)]">Total</th>
+          </tr>
+        </thead>
+        <tbody>${gradeRows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function updateGrade(studentId, key, value){
+  const data = classData();
+  let v = Number(value);
+  if(isNaN(v)) v = 0;
+  v = Math.max(0, Math.min(100, v));
+  if(!data.grades[studentId]) data.grades[studentId] = {};
+  data.grades[studentId][key] = v;
+  saveData();
+  renderPenilaianPage();
+}
+
+/* ==================== 8b. RENDER: HALAMAN UANG KAS & PENGELUARAN (bendahara) ==================== */
+function formatRupiah(n){
+  return 'Rp' + Number(n||0).toLocaleString('id-ID');
+}
+
+function renderKasPage(){
+  const data = classData();
+  const m = meta();
+  const list = data.kas.transactions;
+  const totalMasuk  = list.filter(t=>t.tipe==='masuk').reduce((a,t)=>a+Number(t.jumlah||0),0);
+  const totalKeluar = list.filter(t=>t.tipe==='keluar').reduce((a,t)=>a+Number(t.jumlah||0),0);
+  const saldo = totalMasuk - totalKeluar;
+
+  const rows = list.slice().reverse().map(t=>`
+    <tr class="border-t" style="border-color:var(--border)">
+      <td class="px-2 py-2"><input type="date" value="${t.tanggal||''}" class="w-full border rounded-md px-2 py-1 text-sm" style="border-color:var(--border)" onchange="updateKasTransaction('${t.id}','tanggal',this.value)"></td>
+      <td class="px-2 py-2"><input type="text" value="${escapeHtml(t.keterangan)}" class="w-full border rounded-md px-2 py-1 text-sm" style="border-color:var(--border)" onchange="updateKasTransaction('${t.id}','keterangan',this.value)"></td>
+      <td class="px-2 py-2">
+        <select class="border rounded-md px-2 py-1 text-sm" style="border-color:var(--border)" onchange="updateKasTransaction('${t.id}','tipe',this.value)">
+          <option value="masuk" ${t.tipe==='masuk'?'selected':''}>⬆️ Masuk</option>
+          <option value="keluar" ${t.tipe==='keluar'?'selected':''}>⬇️ Keluar</option>
+        </select>
+      </td>
+      <td class="px-2 py-2"><input type="number" min="0" value="${t.jumlah||0}" class="w-28 border rounded-md px-2 py-1 text-sm" style="border-color:var(--border)" onchange="updateKasTransaction('${t.id}','jumlah',this.value)"></td>
+      <td class="px-2 py-2 text-center">
+        <button onclick="deleteKasTransaction('${t.id}')" class="text-red-500 hover:opacity-70"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('') || `<tr><td colspan="5" class="px-3 py-4 text-sm text-[var(--text-muted)]">📭 Belum ada transaksi kas.</td></tr>`;
+
+  document.getElementById('pageContent').innerHTML = `
+    ${pageHeader('💰 Uang Kas & Pengeluaran', `Catat pemasukan dan pengeluaran kas kelas ${m.label}.`)}
+
+    <div class="grid sm:grid-cols-3 gap-4 mb-6">
+      <div class="card p-4"><p class="text-xs text-[var(--text-muted)] mb-1">💵 Saldo Saat Ini</p><p class="font-display text-xl font-bold" style="color:${saldo>=0?m.color:'#E5484D'}">${formatRupiah(saldo)}</p></div>
+      <div class="card p-4"><p class="text-xs text-[var(--text-muted)] mb-1">⬆️ Total Pemasukan</p><p class="font-display text-xl font-bold" style="color:var(--st-hadir)">${formatRupiah(totalMasuk)}</p></div>
+      <div class="card p-4"><p class="text-xs text-[var(--text-muted)] mb-1">⬇️ Total Pengeluaran</p><p class="font-display text-xl font-bold" style="color:var(--st-alfa)">${formatRupiah(totalKeluar)}</p></div>
+    </div>
+
+    <div class="card p-4 mb-4">
+      <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-3">➕ Tambah Transaksi</p>
+      <div class="grid sm:grid-cols-4 gap-2">
+        <input id="newKasTanggal" type="date" value="${new Date().toISOString().slice(0,10)}" class="border rounded-lg px-3 py-2 text-sm" style="border-color:var(--border)">
+        <input id="newKasKeterangan" type="text" placeholder="Keterangan" class="border rounded-lg px-3 py-2 text-sm sm:col-span-2" style="border-color:var(--border)">
+        <select id="newKasTipe" class="border rounded-lg px-3 py-2 text-sm" style="border-color:var(--border)">
+          <option value="masuk">⬆️ Masuk</option>
+          <option value="keluar">⬇️ Keluar</option>
+        </select>
+      </div>
+      <div class="flex gap-2 mt-2">
+        <input id="newKasJumlah" type="number" min="0" placeholder="Jumlah (Rp)" class="border rounded-lg px-3 py-2 text-sm flex-1" style="border-color:var(--border)">
+        <button onclick="addKasTransaction()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white" style="background:${m.color}">
+          <i class="fa-solid fa-plus mr-1"></i> Simpan
+        </button>
+      </div>
+    </div>
+
+    <div class="card overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b" style="border-color:var(--border)">
+            <th class="px-2 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Tanggal</th>
+            <th class="px-2 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Keterangan</th>
+            <th class="px-2 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Tipe</th>
+            <th class="px-2 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Jumlah</th>
+            <th class="px-2 py-2 text-center text-[11px] font-semibold text-[var(--text-muted)]"></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function addKasTransaction(){
+  const data = classData();
+  const tanggal = document.getElementById('newKasTanggal').value;
+  const keterangan = document.getElementById('newKasKeterangan').value.trim();
+  const tipe = document.getElementById('newKasTipe').value;
+  const jumlah = Number(document.getElementById('newKasJumlah').value) || 0;
+  if(!keterangan){ showToast('⚠️ Keterangan wajib diisi.', 'error'); return; }
+  data.kas.transactions.push({ id: uid('kt'), tanggal, keterangan, tipe, jumlah });
+  saveData();
+  showToast('✅ Transaksi kas ditambahkan.');
+  renderKasPage();
+}
+
+function updateKasTransaction(id, field, value){
+  const data = classData();
+  const t = data.kas.transactions.find(x=>x.id===id);
+  if(!t) return;
+  t[field] = field==='jumlah' ? (Number(value)||0) : value;
+  saveData();
+  if(field==='tipe' || field==='jumlah') renderKasPage();
+}
+
+function deleteKasTransaction(id){
+  if(!confirm('Hapus transaksi ini?')) return;
+  const data = classData();
+  data.kas.transactions = data.kas.transactions.filter(x=>x.id!==id);
+  saveData();
+  showToast('🗑️ Transaksi dihapus.');
+  renderKasPage();
+}
+
+/* ==================== 8c. RENDER: HALAMAN KOMPONEN / BARANG & ALAT (bendahara) ==================== */
+function renderKomponenPage(){
+  const data = classData();
+  const m = meta();
+  const items = data.komponen;
+
+  const rows = items.map(it=>`
+    <tr class="border-t" style="border-color:var(--border)">
+      <td class="px-2 py-2"><input type="text" value="${escapeHtml(it.nama)}" class="w-full border rounded-md px-2 py-1 text-sm" style="border-color:var(--border)" onchange="updateKomponen('${it.id}','nama',this.value)"></td>
+      <td class="px-2 py-2"><input type="number" min="0" value="${it.jumlah||0}" class="w-20 border rounded-md px-2 py-1 text-sm" style="border-color:var(--border)" onchange="updateKomponen('${it.id}','jumlah',this.value)"></td>
+      <td class="px-2 py-2">
+        <select class="border rounded-md px-2 py-1 text-sm" style="border-color:var(--border)" onchange="updateKomponen('${it.id}','kondisi',this.value)">
+          ${KONDISI_OPTIONS.map(k=>`<option value="${k}" ${it.kondisi===k?'selected':''}>${k}</option>`).join('')}
+        </select>
+      </td>
+      <td class="px-2 py-2"><input type="text" value="${escapeHtml(it.catatan)}" placeholder="Catatan" class="w-full border rounded-md px-2 py-1 text-sm" style="border-color:var(--border)" onchange="updateKomponen('${it.id}','catatan',this.value)"></td>
+      <td class="px-2 py-2 text-center">
+        <button onclick="deleteKomponen('${it.id}')" class="text-red-500 hover:opacity-70"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('') || `<tr><td colspan="5" class="px-3 py-4 text-sm text-[var(--text-muted)]">📭 Belum ada barang/alat tercatat.</td></tr>`;
+
+  document.getElementById('pageContent').innerHTML = `
+    ${pageHeader('📦 Komponen (Barang/Alat Kelas)', `Daftar barang & alat kelas ${m.label} beserta jumlah dan kondisinya.`)}
+
+    <div class="flex justify-end mb-4">
+      <button onclick="addKomponen()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white flex items-center gap-2" style="background:${m.color}">
+        <i class="fa-solid fa-plus"></i> Tambah Barang
+      </button>
+    </div>
+
+    <div class="card overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b" style="border-color:var(--border)">
+            <th class="px-2 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Nama Barang</th>
+            <th class="px-2 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Jumlah</th>
+            <th class="px-2 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Kondisi</th>
+            <th class="px-2 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Catatan</th>
+            <th class="px-2 py-2 text-center text-[11px] font-semibold text-[var(--text-muted)]"></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function addKomponen(){
+  const data = classData();
+  data.komponen.push({ id: uid('kp'), nama:'Barang Baru', jumlah:1, kondisi:'Baik', catatan:'' });
+  saveData();
+  showToast('✅ Barang ditambahkan, silakan lengkapi datanya.');
+  renderKomponenPage();
+}
+
+function updateKomponen(id, field, value){
+  const data = classData();
+  const it = data.komponen.find(x=>x.id===id);
+  if(!it) return;
+  it[field] = field==='jumlah' ? (Number(value)||0) : value;
+  saveData();
+  if(field==='kondisi') renderKomponenPage();
+}
+
+function deleteKomponen(id){
+  if(!confirm('Hapus barang ini dari daftar?')) return;
+  const data = classData();
+  data.komponen = data.komponen.filter(x=>x.id!==id);
+  saveData();
+  showToast('🗑️ Barang dihapus.');
+  renderKomponenPage();
+}
+
+/* ==================== 9. RENDER: HALAMAN PENGATURAN (EXPORT/IMPORT) ==================== */
+function renderPengaturanPage(){
+  document.getElementById('pageContent').innerHTML = `
+    <div class="mb-6">
+      <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]"><i class="fa-solid fa-gear mr-1"></i>⚙️ Pengaturan</p>
+      <h1 class="font-display text-2xl font-bold mt-1">💾 Backup Data</h1>
+      <p class="text-sm text-[var(--text-muted)] mt-1">Karena aplikasi ini berjalan lokal tanpa server, semua data hanya tersimpan di localStorage browser ini. Selalu export data secara berkala agar tidak hilang. 🙏</p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4 max-w-2xl">
+      <div class="card p-5">
+        <i class="fa-solid fa-file-export text-xl mb-2" style="color:var(--wd)"></i>
+        <p class="font-semibold mb-1">📤 Export Data ke JSON</p>
+        <p class="text-xs text-[var(--text-muted)] mb-4">Unduh seluruh data (kedua kelas) sebagai satu file .json untuk cadangan.</p>
+        <button onclick="exportData()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white w-full" style="background:var(--wd)">
+          <i class="fa-solid fa-download mr-1"></i> Export JSON
+        </button>
+      </div>
+      <div class="card p-5">
+        <i class="fa-solid fa-file-import text-xl mb-2" style="color:var(--rb)"></i>
+        <p class="font-semibold mb-1">📥 Import Data dari JSON</p>
+        <p class="text-xs text-[var(--text-muted)] mb-4">Pilih file .json hasil export sebelumnya. Ini akan menimpa seluruh data saat ini.</p>
+        <button onclick="document.getElementById('importFileInput').click()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white w-full" style="background:var(--rb)">
+          <i class="fa-solid fa-upload mr-1"></i> Import JSON
+        </button>
+      </div>
+    </div>
+
+    <div class="card p-5 mt-4 max-w-2xl border-l-4" style="border-left-color:#E5484D">
+      <p class="font-semibold mb-1 text-sm"><i class="fa-solid fa-triangle-exclamation mr-1" style="color:#E5484D"></i>🗑️ Reset Data</p>
+      <p class="text-xs text-[var(--text-muted)] mb-3">Menghapus semua data dan mengembalikan ke data contoh awal. Tidak bisa dibatalkan — export dulu jika perlu.</p>
+      <button onclick="resetData()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white" style="background:#E5484D">
+        Reset ke Data Awal
+      </button>
+    </div>
+
+    ${renderAkunSection()}
+  `;
+}
+
+/* ==================== 9b. MANAJEMEN AKUN & PERAN (khusus Owner) ==================== */
+function studentOptionsForAccountForm(selectedClass, selectedId){
+  return ['webdev','robotic'].map(cls=>{
+    const label = CLASS_META[cls].label;
+    const opts = (DB[cls].students||[]).map(s=>
+      `<option value="${cls}::${s.id}" ${selectedClass===cls && selectedId===s.id ? 'selected':''}>${escapeHtml(s.name)}</option>`
+    ).join('');
+    return `<optgroup label="${label}">${opts}</optgroup>`;
+  }).join('');
+}
+
+function renderAkunSection(){
+  const rows = ACCOUNTS.map(a=>{
+    const roleLabel = (ROLE_META[a.role]||{}).label || a.role;
+    const linked = a.role==='customer' ? `${escapeHtml(a.displayName)} (${CLASS_META[a.studentClass]?CLASS_META[a.studentClass].label:'-'})` : '—';
+    const isLastOwner = a.role==='owner' && ACCOUNTS.filter(x=>x.role==='owner').length<=1;
+    return `
+      <tr class="border-t" style="border-color:var(--border)">
+        <td class="px-3 py-2 font-medium whitespace-nowrap">${escapeHtml(a.username)}</td>
+        <td class="px-3 py-2"><input type="text" value="${escapeHtml(a.password)}" class="w-28 border rounded-md px-2 py-1 text-sm" style="border-color:var(--border)" onchange="updateAccountField('${a.id}','password',this.value)"></td>
+        <td class="px-3 py-2 whitespace-nowrap">${roleLabel}</td>
+        <td class="px-3 py-2 whitespace-nowrap">${linked}</td>
+        <td class="px-3 py-2 text-center">
+          <button onclick="deleteAccount('${a.id}')" ${isLastOwner?'disabled title="Minimal harus ada 1 akun owner"':''} class="text-red-500 hover:opacity-70 ${isLastOwner?'opacity-30 cursor-not-allowed':''}"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="card p-5 mt-4 max-w-3xl">
+      <p class="font-semibold mb-1"><i class="fa-solid fa-key mr-1" style="color:var(--wd)"></i>🔑 Manajemen Akun &amp; Peran</p>
+      <p class="text-xs text-[var(--text-muted)] mb-4">Kelola siapa saja yang bisa login dan halaman apa yang bisa mereka akses. Akun "Siswa (Customer)" hanya bisa melihat &amp; mengisi tugasnya sendiri.</p>
+
+      <div class="overflow-x-auto mb-5">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="border-b" style="border-color:var(--border)">
+              <th class="px-3 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Username</th>
+              <th class="px-3 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Password</th>
+              <th class="px-3 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Peran</th>
+              <th class="px-3 py-2 text-left text-[11px] font-semibold text-[var(--text-muted)]">Terhubung ke Siswa</th>
+              <th class="px-3 py-2 text-center text-[11px] font-semibold text-[var(--text-muted)]"></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+
+      <div class="border-t pt-4" style="border-color:var(--border)">
+        <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">➕ Tambah Akun Baru</p>
+        <div class="grid sm:grid-cols-2 gap-2 mb-2">
+          <input id="newAccUsername" type="text" placeholder="Username" class="border rounded-lg px-3 py-2 text-sm" style="border-color:var(--border)">
+          <input id="newAccPassword" type="text" placeholder="Password" class="border rounded-lg px-3 py-2 text-sm" style="border-color:var(--border)">
+        </div>
+        <div class="grid sm:grid-cols-2 gap-2 mb-2">
+          <select id="newAccRole" onchange="toggleAccStudentField()" class="border rounded-lg px-3 py-2 text-sm" style="border-color:var(--border)">
+            ${Object.entries(ROLE_META).map(([key,r])=>`<option value="${key}">${r.label}</option>`).join('')}
+          </select>
+          <select id="newAccStudent" class="border rounded-lg px-3 py-2 text-sm hidden" style="border-color:var(--border)">
+            ${studentOptionsForAccountForm()}
+          </select>
+        </div>
+        <button onclick="addAccount()" class="px-4 py-2 rounded-lg text-sm font-semibold text-white w-full sm:w-auto" style="background:var(--wd)">
+          <i class="fa-solid fa-user-plus mr-1"></i> Simpan Akun
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function toggleAccStudentField(){
+  const role = document.getElementById('newAccRole').value;
+  document.getElementById('newAccStudent').classList.toggle('hidden', role !== 'customer');
+}
+
+function addAccount(){
+  const username = document.getElementById('newAccUsername').value.trim();
+  const password = document.getElementById('newAccPassword').value.trim();
+  const role = document.getElementById('newAccRole').value;
+  if(!username || !password){ showToast('⚠️ Username dan password wajib diisi.', 'error'); return; }
+  if(ACCOUNTS.some(a=>a.username.toLowerCase()===username.toLowerCase())){
+    showToast('⚠️ Username sudah dipakai.', 'error'); return;
+  }
+  const acc = { id: uid('acc'), username, password, role };
+  if(role === 'customer'){
+    const sel = document.getElementById('newAccStudent').value; // "cls::id"
+    if(!sel){ showToast('⚠️ Pilih siswa untuk akun customer.', 'error'); return; }
+    const [cls, sid] = sel.split('::');
+    const student = DB[cls].students.find(s=>s.id===sid);
+    acc.studentClass = cls;
+    acc.studentId = sid;
+    acc.displayName = student ? student.name : username;
+  } else {
+    acc.displayName = (ROLE_META[role]||{}).label || username;
+  }
+  ACCOUNTS.push(acc);
+  saveAccounts();
+  showToast('✅ Akun berhasil dibuat.');
+  renderPengaturanPage();
+}
+
+function updateAccountField(id, field, value){
+  const a = ACCOUNTS.find(x=>x.id===id);
+  if(!a) return;
+  a[field] = value;
+  saveAccounts();
+}
+
+function deleteAccount(id){
+  const a = ACCOUNTS.find(x=>x.id===id);
+  if(!a) return;
+  if(a.role==='owner' && ACCOUNTS.filter(x=>x.role==='owner').length<=1){
+    showToast('⚠️ Minimal harus ada 1 akun owner.', 'error'); return;
+  }
+  if(!confirm(`Hapus akun "${a.username}"?`)) return;
+  ACCOUNTS = ACCOUNTS.filter(x=>x.id!==id);
+  saveAccounts();
+  showToast('🗑️ Akun dihapus.');
+  renderPengaturanPage();
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(DB, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `classdeck-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('✅ Data berhasil di-export.');
+}
+
+document.getElementById('importFileInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      const parsed = JSON.parse(evt.target.result);
+      if(!parsed.webdev || !parsed.robotic){
+        showToast('⚠️ Format file JSON tidak sesuai.', 'error');
+        return;
+      }
+      DB = parsed;
+      saveData();
+      showToast('✅ Data berhasil di-import.');
+      renderPage();
+    }catch(err){
+      console.error(err);
+      showToast('❌ Gagal membaca file JSON.', 'error');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = ''; // reset supaya bisa pilih file yang sama lagi
+});
+
+function resetData(){
+  if(!confirm('Yakin ingin menghapus semua data dan kembali ke data contoh awal?')) return;
+  DB = buildDefaultData();
+  saveData();
+  showToast('🔄 Data direset ke data awal.');
+  renderPage();
+}
+
+/* ==================== 10. MODAL: DETAIL SISWA ==================== */
+function openStudentModal(studentId){
+  const data = classData();
+  const m = meta();
+  const s = data.students.find(x=>x.id===studentId);
+  if(!s) return;
+
+  const taskListHtml = s.tasks.length ? s.tasks.map(t => {
+    if(currentClass === 'robotic'){
+      return `
+        <div class="border rounded-lg p-3 mb-2 text-sm" style="border-color:var(--border)">
+          <p class="font-medium mb-1">${escapeHtml(t.title)}</p>
+          <p class="text-xs text-[var(--text-muted)] mb-1">${t.date||''}</p>
+          <a href="${escapeHtml(t.photoLink)}" target="_blank" class="text-xs block truncate hover:underline" style="color:${m.color}"><i class="fa-solid fa-image mr-1"></i>${escapeHtml(t.photoLink)||'(belum diisi)'}</a>
+          <a href="${escapeHtml(t.projectLink)}" target="_blank" class="text-xs block truncate hover:underline" style="color:${m.color}"><i class="fa-solid fa-code-branch mr-1"></i>${escapeHtml(t.projectLink)||'(belum diisi)'}</a>
+        </div>
+      `;
+    }
+    return `
+      <div class="border rounded-lg p-3 mb-2 text-sm" style="border-color:var(--border)">
+        <p class="font-medium mb-1">${escapeHtml(t.title)}</p>
+        <p class="text-xs text-[var(--text-muted)] mb-1">${t.date||''}</p>
+        <a href="${escapeHtml(t.link)}" target="_blank" class="text-xs block truncate hover:underline" style="color:${m.color}"><i class="fa-solid fa-link mr-1"></i>${escapeHtml(t.link)||'(belum diisi)'}</a>
+      </div>
+    `;
+  }).join('') : `<p class="text-xs text-[var(--text-muted)]">📭 Belum ada tugas dikumpulkan.</p>`;
+
+  const taskFormHtml = currentClass === 'robotic' ? `
+    <input id="newTaskTitle" placeholder="Judul tugas/proyek" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+    <input id="newTaskPhoto" placeholder="Link Foto/Dokumentasi" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+    <input id="newTaskProject" placeholder="Link File Project (Drive/Github/Docs)" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+  ` : `
+    <input id="newTaskTitle" placeholder="Judul tugas/proyek" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+    <input id="newTaskLink" placeholder="Link Project" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color:var(--border)">
+  `;
+
+  document.getElementById('studentModalBody').innerHTML = `
+    <div class="flex items-start justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center font-display font-bold text-white" style="background:${m.color}">
+          ${escapeHtml(s.name).charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <p class="font-semibold">${escapeHtml(s.name)}</p>
+          <p class="text-xs text-[var(--text-muted)]">${m.label}</p>
+        </div>
+      </div>
+      <button onclick="closeModal('studentModal')" class="text-[var(--text-muted)] hover:opacity-70"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <p class="text-sm mb-4">${escapeHtml(s.bio) || '<span class="text-[var(--text-muted)]">😴 Belum ada bio.</span>'}</p>
+
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">📂 Riwayat Tugas / Proyek</p>
+      <div class="flex gap-2">
+        <button onclick="openStudentForm('${s.id}')" class="text-xs" style="color:${m.color}"><i class="fa-solid fa-pen"></i> ✏️ Edit Profil</button>
+        <button onclick="deleteStudent('${s.id}')" class="text-xs text-red-500"><i class="fa-solid fa-trash"></i> 🗑️ Hapus</button>
+      </div>
+    </div>
+    <div class="max-h-40 overflow-y-auto mb-3">${taskListHtml}</div>
+
+    <div class="border-t pt-3" style="border-color:var(--border)">
+      <p class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">➕ Tambah Tugas Baru</p>
+      ${taskFormHtml}
+      <button onclick="addTask('${s.id}')" class="px-4 py-2 rounded-lg text-sm font-semibold text-white w-full" style="background:${m.color}">
+        <i class="fa-solid fa-plus mr-1"></i> 💾 Simpan Tugas
+      </button>
+    </div>
+  `;
+
+  openModal('studentModal');
+}
+
+function addTask(studentId){
+  const data = classData();
+  const s = data.students.find(x=>x.id===studentId);
+  if(!s) return;
+  const title = document.getElementById('newTaskTitle').value.trim();
+  if(!title){ showToast('⚠️ Judul tugas wajib diisi.', 'error'); return; }
+
+  const task = { id: uid('t'), title, date: new Date().toISOString().slice(0,10) };
+  if(currentClass === 'robotic'){
+    task.photoLink   = document.getElementById('newTaskPhoto').value.trim();
+    task.projectLink = document.getElementById('newTaskProject').value.trim();
+  } else {
+    task.link = document.getElementById('newTaskLink').value.trim();
+  }
+  s.tasks.unshift(task);
+  saveData();
+  showToast('✅ Tugas berhasil ditambahkan.');
+  openStudentModal(studentId); // refresh modal
+  renderProfilPage();          // refresh jumlah tugas di kartu
+}
+
+function deleteStudent(studentId){
+  if(!confirm('Hapus siswa ini beserta seluruh data absensi dan nilainya?')) return;
+  const data = classData();
+  data.students = data.students.filter(s=>s.id!==studentId);
+  delete data.attendance[studentId];
+  delete data.grades[studentId];
+  saveData();
+  // 🔐 hapus juga akun login customer milik siswa ini biar tidak jadi akun "hantu"
+  const beforeLen = ACCOUNTS.length;
+  ACCOUNTS = ACCOUNTS.filter(a=>!(a.role==='customer' && a.studentId===studentId));
+  if(ACCOUNTS.length !== beforeLen) saveAccounts();
+  closeModal('studentModal');
+  showToast('🗑️ Siswa dihapus.');
+  renderPage();
+}
+
+/* ==================== 11. MODAL: FORM TAMBAH/EDIT SISWA ==================== */
+function openStudentForm(studentId){
+  const data = classData();
+  const m = meta();
+  const editing = !!studentId;
+  const s = editing ? data.students.find(x=>x.id===studentId) : null;
+
+  document.getElementById('formModalBody').innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <p class="font-semibold">${editing ? '✏️ Edit Siswa' : '➕ Tambah Siswa Baru'}</p>
+      <button onclick="closeModal('formModal')" class="text-[var(--text-muted)] hover:opacity-70"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <label class="text-xs font-medium text-[var(--text-muted)]">Nama Lengkap</label>
+    <input id="formName" value="${s ? escapeHtml(s.name) : ''}" class="w-full border rounded-lg px-3 py-2 text-sm mb-3 mt-1" style="border-color:var(--border)">
+    <label class="text-xs font-medium text-[var(--text-muted)]">Bio Singkat</label>
+    <textarea id="formBio" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm mb-4 mt-1" style="border-color:var(--border)">${s ? escapeHtml(s.bio) : ''}</textarea>
+    <button onclick="saveStudentForm(${editing ? `'${studentId}'` : 'null'})" class="px-4 py-2 rounded-lg text-sm font-semibold text-white w-full" style="background:${m.color}">
+      <i class="fa-solid fa-floppy-disk mr-1"></i> 💾 Simpan
+    </button>
+  `;
+  closeModal('studentModal');
+  openModal('formModal');
+}
+
+function saveStudentForm(studentId){
+  const data = classData();
+  const name = document.getElementById('formName').value.trim();
+  const bio  = document.getElementById('formBio').value.trim();
+  if(!name){ showToast('⚠️ Nama wajib diisi.', 'error'); return; }
+
+  if(studentId){
+    const s = data.students.find(x=>x.id===studentId);
+    s.name = name; s.bio = bio;
+    // 🔄 nama bisa berubah, jadi sinkronkan juga nama tampilan di akun customer terkait (username tidak diubah biar tidak bikin siswa bingung login)
+    const acc = ACCOUNTS.find(a=>a.role==='customer' && a.studentId===studentId);
+    if(acc){ acc.displayName = name; saveAccounts(); }
+  } else {
+    const newId = uid('s');
+    data.students.push({ id:newId, name, kelas: meta().label, bio, tasks: [] });
+    // 🔐 otomatis buatkan akun login customer untuk siswa baru: username dari nama, password default siswa123
+    const used = new Set(ACCOUNTS.map(a=>a.username.toLowerCase()));
+    let base = slugifyUsername(name) || 'siswa';
+    let username = base, n = 2;
+    while(used.has(username.toLowerCase())){ username = `${base}${n}`; n++; }
+    ACCOUNTS.push({
+      id: uid('acc'),
+      username,
+      password: 'siswa123',
+      role: 'customer',
+      studentId: newId,
+      studentClass: currentClass,
+      displayName: name
+    });
+    saveAccounts();
+    showToast(`🔑 Akun siswa dibuat: ${username} / siswa123`);
+  }
+  saveData();
+  closeModal('formModal');
+  showToast('✅ Data siswa disimpan.');
+  renderPage();
+}
+
+/* ==================== util modal ==================== */
+function openModal(id){
+  const el = document.getElementById(id);
+  el.classList.remove('hidden');
+  el.classList.add('flex');
+}
+function closeModal(id){
+  const el = document.getElementById(id);
+  el.classList.add('hidden');
+  el.classList.remove('flex');
+}
+
+/* ==================== 12. INIT ==================== */
+function renderPage(){
+  if(SESSION && !ALLOWED_PAGES.includes(currentPage)){
+    currentPage = ALLOWED_PAGES[0] || 'profil';
+  }
+  renderSidebar();
+  if(currentPage === 'profil')      renderProfilPage();
+  else if(currentPage === 'absensi')   renderAbsensiPage();
+  else if(currentPage === 'penilaian') renderPenilaianPage();
+  else if(currentPage === 'kas')       renderKasPage();
+  else if(currentPage === 'komponen')  renderKomponenPage();
+  else if(currentPage === 'pengaturan') renderPengaturanPage();
+}
+
+document.getElementById('classSwitcher').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.class-btn');
+  if(!btn) return;
+  currentClass = btn.dataset.class;
+  if(currentPage === 'pengaturan') currentPage = ALLOWED_PAGES.find(p=>p!=='pengaturan') || ALLOWED_PAGES[0]; // pengaturan bersifat global, sisanya per-kelas
+  renderPage();
+});
+
+document.querySelectorAll('.menu-btn[data-page]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    currentPage = btn.dataset.page;
+    renderPage();
+  });
+});
+
+// klik area gelap di belakang modal untuk menutup
+[['studentModal'],['formModal']].forEach(([id])=>{
+  document.getElementById(id).addEventListener('click', (e)=>{
+    if(e.target.id === id) closeModal(id);
+  });
+});
+
+// terapkan tema tersimpan, lalu render sesuai peran (kalau ada sesi login)
+if(SESSION){
+  applyTheme();
+  if(SESSION.role === 'customer'){
+    document.querySelector('.flex.min-h-screen').classList.add('hidden');
+    const cv = document.getElementById('customerView');
+    cv.classList.remove('hidden');
+    cv.classList.add('flex');
+    renderCustomerPage();
+  } else {
+    applyRoleUI();
+    renderPage();
+  }
+}
+</script>
+</body>
+</html>
