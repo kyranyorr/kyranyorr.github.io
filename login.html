@@ -171,7 +171,7 @@
         <i class="fa-solid fa-chalkboard-user text-lg"></i>
       </div>
       <div class="flex-1 min-w-0">
-        <p class="font-display font-bold text-white leading-none">Database Kyran</p>
+        <p class="font-display font-bold text-white leading-none">🎓 Database Kyran</p>
         <p class="text-[11px] text-white/40 mt-0.5">✨ Manajemen Kelas Kyran</p>
       </div>
       <!-- 🌗 Tombol ubah tema gelap/terang, ikonnya berubah otomatis lewat applyTheme() -->
@@ -195,7 +195,7 @@
     <p class="text-[11px] uppercase tracking-wide text-white/30 px-3 mb-2">📌 Menu</p>
     <nav class="flex flex-col gap-1" id="menuNav">
       <button data-page="profil" class="menu-btn flex items-center gap-2 px-3 py-2.5 rounded-r-lg text-sm font-medium text-left">
-        <i class="fa-solid fa-id-card w-4"></i>  Profil &amp; Tugas Siswa
+        <i class="fa-solid fa-id-card w-4"></i> 🪪 Profil &amp; Tugas Siswa
       </button>
       <button data-page="absensi" class="menu-btn flex items-center gap-2 px-3 py-2.5 rounded-r-lg text-sm font-medium text-left">
         <i class="fa-solid fa-table-list w-4"></i> 📋 Absensi
@@ -488,7 +488,7 @@ function loadSession(){
 }
 function logout(){
   localStorage.removeItem(SESSION_KEY);
-  window.location.href = 'login.html';
+  window.location.href = 'index.html';
 }
 
 function loadData(){
@@ -562,7 +562,7 @@ let currentTheme = loadTheme();      // 'light' | 'dark', diingat otomatis lewat
 
 // 🔐 wajib login: kalau belum ada sesi, lempar ke halaman login dan hentikan render
 if(!SESSION){
-  window.location.href = 'login.html';
+  window.location.href = 'index.html';
 }
 const ALLOWED_PAGES = SESSION ? (ROLE_META[SESSION.role] ? ROLE_META[SESSION.role].pages : []) : [];
 if(SESSION && SESSION.role !== 'customer' && !ALLOWED_PAGES.includes(currentPage)){
