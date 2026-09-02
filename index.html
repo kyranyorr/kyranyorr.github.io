@@ -389,13 +389,9 @@
   }
   ensureDefaultsExist();
 
-  // kalau sudah ada sesi login yang tersimpan, langsung lempar ke dashboard
-  (function(){
-    try{
-      const s = JSON.parse(localStorage.getItem(SESSION_KEY));
-      if(s && s.username){ window.location.href = 'index.html'; }
-    }catch(e){}
-  })();
+  // 🚪 selalu tampilkan form login yang bersih saat halaman ini dibuka —
+  // hapus sesi lama supaya tidak otomatis "nyangkut" ke akun yang login sebelumnya
+  localStorage.removeItem(SESSION_KEY);
 
   /* ==================== SUBMIT LOGIN ==================== */
   const form = document.getElementById('loginForm');
